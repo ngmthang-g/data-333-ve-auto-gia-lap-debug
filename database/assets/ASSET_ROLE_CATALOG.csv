@@ -1,0 +1,25 @@
+asset_pattern_or_family,feature,semantic_role,examples,evidence,notes
+sttthuylao1..12,activity_thuylao,stage/state detector,"sttthuylao1 ... sttthuylao12",visual sheet + filenames,12 numbered state markers strongly imply stage index detection
+thuylaovitri1..12,activity_thuylao,coordinate/position text detector,"(106,148); (143,148); (150,120); (150,85); (150,50); (120,42); (85,42); (49,42); (41,71); (41,107); (41,141); (71,148)",visual sheet + filenames,templates encode visible coordinate strings rather than raw numeric config
+vaothuylao/endthuylao/loiraithuylao,activity_thuylao,entry/completion/exit detector,"Xin vào; Thủy Lao 6 lần; [Lối ra]",visual sheet + filenames,branch guards around dungeon lifecycle
+vitriactac1..7,activity_actac,map-position detector,"7 small minimap/terrain crops",visual sheet + filenames,likely identifies configured Ác Tặc locations from minimap/background
+endactac/khieuchienactac/pbactac,activity_actac,combat/completion/instance detector,"Nhiệm vụ hoàn thành; challenge/instance labels",visual sheet + filenames,used to distinguish activity phases
+TBD/tentbd/lenhbai/dinhviphu/bosstbd1/endtbd*,activity_tbd,mission accept/locate/target/completion detector,"định vị phù; boss/end labels",filenames + feature methods,forms accept→locate→fight→turn-in evidence family
+ItemSell_TrangVatPham/*,inventory_sell,item visual classifier,"435 item templates in dominant folder",snapshot inventory + folder name,high-volume donor policy database rather than generic UI chrome
+itemrac/*,inventory_sell,trash/discard classifier,"91 templates",snapshot inventory + folder name,likely keep/drop policy input
+Item_vaokho/*,storage,deposit classifier,"19 templates",snapshot inventory + folder name,visual item policy for storage flow
+PT/*,party_follow,party state/action detector,"35 templates",snapshot inventory + visual labels,team create/join/follow/leave guards
+saveImage/*,vision_perception,screen crop/reference cache,"218 images",snapshot inventory + names,not all are feature semantics; treat as perception/fallback corpus
+bangchat/batchat/chatpt/kenhchat,party_follow|core_orchestration,UI navigation detector,"Tán gẫu; chat icon; Tổ đội tab",visual sheet,opens/changes chat/team interaction context
+bangxindoi/davadoi/dacodoi,party_follow,party request/current-team guard,"Xin vào đội; team icon; Bạn đã có đội rồi",visual sheet,guards invite/join flow
+clickkenhtodoi/chatpt,party_follow,party-channel navigation,"Tổ đội",visual sheet,UI tab/channel activation
+huyquanhe/giaitan,party_follow,leave/dissolve confirmation detector,"Hủy quan hệ; Giải tán",visual sheet,mutation confirmation state
+hetquai*,train_combat,target-availability/error detector,"Hiện không...; phù hợp; xung quanh; Hiện không có mục tiêu nào phù hợp",visual sheet,negative-state proof for target acquisition/retry logic
+dangbatdanh/autonv/batautonv,train_combat|quest_level,auto-mode state detector,"TỰ ĐỘNG ĐÁNH; auto quest icon",visual sheet,indicates donor reads visible auto state rather than semantic runtime flag
+hetmau/hetmau1/hetmau2,heal_buff,HP/low-health detector,"red HP bar fragments",visual sheet,visual fallback for vitals thresholds
+itemhpmau/itemkimsangduoc,heal_buff|consumable_shop,medicine/item detector,"healing/magic item icons",visual sheet,consumable selection policy
+map/clickmap/dichchuyen/dinhvi/dendia*,travel_navigation,map/navigation action/state detector,"Dịch chuyển; Định vị; Đến địa điểm; map/location names",visual sheet,UI-driven travel path with named map/place templates
+dongy/xacnhan/dongyvaodoi,core_orchestration,generic confirmation detector,"Đồng ý; Xác nhận",visual sheet,must be joined with surrounding feature state to avoid ambiguous clicks
+dauthai,heal_buff|quest_level,death/revive UI detector,"Đầu thai",visual sheet,death-recovery branch evidence
+bossat/bosstbd1,activity_actac|activity_tbd,target identity detector,"NPC/boss portrait crops",visual sheet,visual actor identification; exact runtime identity not proven
+0/10/50/100/200/300/400/500/1000,trade_transfer|consumable_shop,numeric amount/value detector,"visible amount labels",visual sheet,likely used for quantity/gold/item-selection UI; exact feature caller needs proof
