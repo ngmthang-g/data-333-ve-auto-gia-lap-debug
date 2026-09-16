@@ -1,84 +1,106 @@
-# AI Bootstrap — DATA-333 auto debug/tool
+# AI Bootstrap — DATA-333 Auto Debug knowledge/data base
 
 ## Purpose
 
-DATA-333 is the canonical knowledge base for the **external Windows automation tool** shipped in the Debug bundle. It complements DATA-2222, which is the canonical knowledge base for client/runtime/static game semantics.
+DATA-333 is the canonical, reproducible data/knowledge base for the supplied **external Windows Auto Thần Long donor tool**. It is intentionally modeled after DATA-2222's lookup-first/materialization approach.
 
-The primary question in this repository is:
+DATA-333 answers:
 
-> How does the existing auto tool discover emulator instances, observe screen state, decide feature state, issue input, persist configuration, and coordinate multiple devices/accounts?
+- what binaries/assets/state models/features exist in the donor;
+- which class/method/property/RID/RVA corresponds to a feature;
+- how emulator/process/window identity is resolved;
+- which observation/input helper surfaces are actually referenced by the main donor;
+- what exact low-level chains KAutoHelper implements;
+- which visual templates are associated with each feature;
+- what is proven static evidence versus an unresolved protected/runtime call-site.
 
-## Evidence levels
+DATA-2222 remains the canonical source for **game client semantic state/actions**. DATA-333 is the canonical source for **donor tool behavior/policy/control evidence**.
 
-- **VERIFIED-PDB** — name/path/symbol observed in the supplied debug PDB.
-- **VERIFIED-METADATA** — type/method observed in managed assembly metadata.
-- **VERIFIED-BINARY-STRING** — literal/API/command observed in executable/DLL strings.
-- **VERIFIED-ASSET** — directly observed file/image/config in the supplied Debug bundle.
-- **PROBABLE** — strong architectural inference from several verified facts, but exact caller/call order is not yet recovered.
-- **HYPOTHESIS** — research direction only.
-
-Never promote PROBABLE/HYPOTHESIS to VERIFIED without new evidence.
-
-## Frozen source snapshot
-
-Key SHA-256 fingerprints:
-
-- `Auto_ThanLong_Kteam_0789998118.exe` — `e1e4f555da3d4891ab0db674ee345bad67c2414632b7d1684151e7a9243134aa`
-- `Auto_ThanLong_obfusca.exe` — `e2ba163c86852e81e60fe6c4694e031a2a7bf1b8838ddef799135736ad764e11`
-- `Auto_ThanLong_Kteam_0789998118.pdb` — `5795d8e41d2504d732919dfd74d135a364ec6fc7cbbc47cdfd71021b2780ad84`
-- `KAutoHelper.dll` — `55fb7f522ab98227c0c6e00009c8090bc99e6a84ebe1d79427d930fd7900ae05`
-
-The protected executable contains a `.themida`/`.boot` layout. The alternate `Auto_ThanLong_obfusca.exe` is a managed .NET assembly with obfuscated metadata. The PDB preserves many original source-level names and is therefore the highest-value static evidence for the auto layer.
-
-## Read order
+## Mandatory lookup order
 
 For normal work:
 
-1. `AI_BOOTSTRAP.md`
-2. `AI_ROUTER.md`
-3. `analysis/01_TOOL_ARCHITECTURE.md`
-4. exactly one feature/connection document relevant to the task
-5. targeted database/catalog records only
-
-Do not re-scan all 1,393 image templates for every task.
-
-## Canonical tool-side architecture
-
-Current best-supported architecture:
-
 ```text
-Login / license / updater
- -> emulator/process discovery
- -> Nox/ADB-port/window mapping
- -> DeviceInfo + AccountInfo + QuestInfo state
- -> per-device start/orchestration
- -> screen acquisition
- -> image/color/OCR observation
- -> feature state machine / guard
- -> ADB or Win32 input primitive
- -> screen/state re-observation
- -> continue / recover / switch feature
+AI_BOOTSTRAP
+ -> AI_ROUTER
+ -> database/TOOL_DATA_INDEX
+ -> one specialized generated dataset
+ -> database/SUBSYSTEM_SOURCE_MAP or SEMANTIC_JOIN_MAP
+ -> one analysis document only if interpretation is needed
+ -> targeted runtime proof only for unresolved protected behavior
 ```
 
-The exact call edge between every box is not fully reconstructed because the production executable is Themida-protected and the alternate assembly is obfuscated. The components and many source method names are directly evidenced.
+Do not re-scan the ZIP, PDB, all PNGs or all MemberRefs for a normal lookup.
 
-## Critical architectural distinction
+## Frozen snapshot
 
-DATA-333 describes the **existing UI-driven donor tool**. DATA-2222 describes **semantic client/runtime actions and state**.
+Generated authority: `database/snapshot/SNAPSHOT_SUMMARY.json` and `database/snapshot/ARTIFACT_MANIFEST_*.csv`.
 
-Do not assume the most reliable future implementation should reproduce every image click. When DATA-2222 already has a semantic state/action contract, treat DATA-333 as behavior/policy evidence and prefer the semantic client route for a rebuilt tool.
+Current materialized snapshot contains 1,450 files / 146,978,306 bytes, including 1,393 PNG templates, 2 EXE, 36 DLL and 3 PDB files.
 
-## Sensitive material rule
+Main donor metadata:
 
-The Debug bundle contains plaintext files that look like account/license/key material. Repository documents may record:
+- `Auto_ThanLong_obfusca.exe`: 57 TypeDefs, 1,070 MethodDefs, 429 Fields;
+- `KAutoHelper.dll`: 40 TypeDefs, 224 MethodDefs;
+- Debug PDB: 783 unique identifier-like symbols.
 
-- file path;
-- field count/schema;
-- byte/line count;
-- cryptographic fingerprint;
+Use hashes in the artifact/binary manifests before applying these facts to a different donor build.
 
-but must **not** copy raw credentials, access tokens, passwords, activation keys, or license codes.
+## Evidence/status vocabulary
 
-## Captcha rule
+- **VERIFIED** — directly materialized from binary metadata, clean IL, PDB, file/image asset or exact static reference.
+- **VERIFIED_STATIC_NONREFERENCE** — an exact static absence in the checked surface; it does not rule out reflection/dynamic/runtime use.
+- **VERIFIED_BUNDLED_NOT_MAIN_REFERENCED** — helper capability exists but main static MemberRefs do not reference it.
+- **PARTIAL / TARGETED_RUNTIME_PROOF** — components/identity are solved; exact protected call-site/order/threshold/result still needs runtime evidence.
+- **PROBABLE** — strong multi-source inference, not direct proof.
+- **HYPOTHESIS** — research direction only.
 
-Captcha-related classes/properties/assets exist in the donor tool. DATA-333 may document that architecture and its state transitions, but rebuilt production automation should pause for user handling rather than attempt automated bypass.
+Never silently upgrade capability into active-path evidence.
+
+## Corrected canonical donor architecture
+
+The strongest current static model is:
+
+```text
+WPF operator/login/license/update shell
+ -> Nox/process/port/window identity discovery
+ -> DeviceInfo / AccountInfo / QuestInfo per-device state
+ -> per-device QuestThread + CheckQuestThread + timers
+ -> CaptureWindow / crop
+ -> OpenCV template matching and/or Tesseract OCR
+ -> protected donor feature/policy routine
+ -> Win32 window click/key/text/drag
+ -> delay/re-capture/re-detect/recover
+```
+
+KAutoHelper also bundles a full ADB input/screenshot layer, but the main managed donor statically references only `ADBHelper.Delay`, not `Tap`, `Swipe`, `ScreenShoot` or `ConnectNox`. Therefore do **not** describe ADB gameplay input as the active donor path without new runtime/reflection proof.
+
+## Key generated routes
+
+- all files/hashes: `database/snapshot/`
+- PE/protection/sections: `database/binary/`
+- CLR classes/methods/fields/properties/PDB: `database/dotnet/`
+- control/helper APIs/call graph/strings/threading: `database/control/`
+- visual assets/deduplication: `database/assets/`
+- feature joins: `database/features/`
+- file-backed persistence: `database/persistence/`
+- atomic facts: `database/FACTS.jsonl`
+- exact generated inventory: `database/TOOL_DATA_MATERIALIZATION_MANIFEST.csv`.
+
+## Static/runtime boundary
+
+Main type/method/property metadata and PDB symbols can prove **identity**. KAutoHelper clean IL can prove **helper implementation chains**. Main static MemberRefs can prove **referenced external surfaces**.
+
+They cannot, by themselves, prove exact protected feature branch order, template threshold, ROI, coordinates, retry count or success state. Store those later as separate runtime trace data instead of guessing.
+
+## DATA-2222 bridge
+
+Use DATA-333 to recover donor intent/policy, then prefer DATA-2222 semantic state/action where already solved. Do not mechanically rebuild `find image -> click -> sleep` when a semantic state/action exists.
+
+## Sensitive material
+
+Credential/key/code-looking plaintext values in the Debug bundle are intentionally excluded. Only schema/path/size/hash metadata may be materialized.
+
+## Captcha
+
+Captcha donor symbols/assets may be indexed as architectural evidence. Production automation should use a pause/manual-handling state rather than automatic bypass.
