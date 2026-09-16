@@ -1,53 +1,57 @@
 # AI Router — DATA-333
 
-Read `AI_BOOTSTRAP.md` first.
+Read `AI_BOOTSTRAP.md` first, then route to generated data before prose analysis.
 
-## Route by question
+## Primary routes
 
-| Question | Start here |
-|---|---|
-| Overall architecture / execution loop | `analysis/01_TOOL_ARCHITECTURE.md` |
-| Device/emulator connection | `analysis/02_DEVICE_CONNECTION_AND_CONTROL.md` |
-| Image matching / OCR / screen observation | `analysis/03_VISION_OCR_PIPELINE.md` |
-| Auto features and state/config flags | `analysis/04_FEATURE_STATE_MAP.md` |
-| Class/type/method inventory | `database/TOOL_CLASS_CATALOG.md` |
-| Exact ADB/Win32 helper primitives | `database/CONTROL_PRIMITIVES.md` |
-| Relationship to DATA-2222 | `analysis/05_DATA222_BRIDGE.md` |
-| Plaintext config/credential exposure | `SECURITY_REDACTION.md` |
+| Question | Start here | Only then |
+|---|---|---|
+| What files/build is this? | `database/snapshot/SNAPSHOT_SUMMARY.json`, artifact manifests | binary manifest/sections |
+| Class/method/property/RVA | `database/dotnet/TYPE_CATALOG.csv`, `MODEL_PROPERTIES.csv`, method chunks | PDB identifiers |
+| Feature methods/assets/state | `database/features/FEATURE_INDEX.csv` | feature method/asset maps |
+| How main controls windows | `database/control/MAIN_STATIC_CONTROL_REFERENCES.csv` | `CONTROL_STACK.csv`, helper call graph |
+| Exact helper API | `database/control/KAUTOHELPER_API.csv` | helper call graph |
+| ADB capability vs actual use | `CONTROL_PRIMITIVES.csv`, `HELPER_STRING_INDICATORS.csv` | main static refs |
+| Nox/PID/port/HWND mapping | `database/SUBSYSTEM_SOURCE_MAP.md` | `CONTROL_STACK.csv` `NOX-IDENTITY` |
+| OCR/template detection | `CONTROL_STACK.csv` + feature asset map | image catalog |
+| Threads/multi-device | `control/THREADING_REFERENCES.csv` + `MODEL_PROPERTIES.csv` | targeted runtime proof |
+| File persistence | `persistence/PERSISTENCE_LAYOUT.csv`, `FILE_IO_REFERENCES.csv` | sensitive schema only |
+| Login/license/update | `control/HTTP_AUTH_UPDATE_REFERENCES.csv` | auth feature methods/models |
+| Cross-table relationship | `database/SEMANTIC_JOIN_MAP.md` | exact rows |
+| Relationship to game semantics | `analysis/05_DATA222_BRIDGE.md` | DATA-2222 |
+| Deep corrected architecture | `analysis/06_DATA_MATERIALIZATION_AND_DEEP_CONTROL.md` | targeted runtime trace |
 
-## Research rule
-
-Use the smallest evidence surface that answers the task:
+## Core rule
 
 ```text
-PDB symbol / managed metadata / helper DLL API / exact asset
- -> identify component
- -> identify state and caller intent
- -> identify control primitive
- -> identify expected visual/state proof
- -> identify failure/recovery path
+lookup specialized data
+ -> join exact records
+ -> separate identity/capability/reference/call-site proof
+ -> reverse/trace only the unresolved edge
 ```
 
-The production executable is Themida-protected. Avoid broad unpacking unless an exact missing fact cannot be answered from PDB, the managed obfuscated build, helper DLLs, assets, or a targeted runtime trace.
+## Evidence priority
 
-## Tool-vs-client rule
+1. exact main static metadata/MemberRefs;
+2. clean KAutoHelper IL + call graph;
+3. PDB original/debug identifiers;
+4. exact image/file/hash evidence;
+5. protected main method identity/RID/RVA;
+6. inference;
+7. runtime trace for protected call-site/order.
 
-If the question is **what the donor tool currently does**, stay in DATA-333.
+## Important corrected control rule
 
-If the question is **how to rebuild the behavior reliably using client semantics**, route to DATA-2222 after identifying the donor intent in DATA-333.
+KAutoHelper contains full ADB methods and exact command templates. That proves bundled capability, **not active gameplay use**.
 
-## Priority evidence
+The main managed donor statically references Win32 window discovery/click/key/text/drag, `CaptureWindow/CropImage`, OpenCV `FindOutPoint(s)` and Tesseract OCR. From `ADBHelper`, it statically references `Delay` only.
 
-1. supplied PDB source symbols;
-2. KAutoHelper managed metadata and command literals;
-3. alternate managed obfuscated executable;
-4. Debug image/config assets;
-5. protected production executable strings/PE layout;
-6. inference.
+Until dynamic/reflection evidence says otherwise, route donor input/capture questions through the Win32/vision stack first.
 
-## Hard cautions
+## Network rule
 
-- Bundled DLL does not prove a code path is actively used. WebView2 is present in the folder, but current static evidence does not prove that MainWindow uses it.
-- Both ADB and Win32 input/capture capabilities exist. Exact feature-by-feature channel selection still needs call-site/runtime proof.
-- No current static evidence shows direct gameplay protocol/socket control by this external tool. Network-related symbols strongly support login/license/update HTTP traffic; gameplay control evidence points to emulator/window/UI automation.
-- A matching image is observation, not state proof. Rebuilt logic should verify the resulting state before the next mutation.
+HTTP/JSON/updater references support login/license/update control-plane behavior. No current static evidence proves direct gameplay socket/protocol control by this external donor.
+
+## Protected-body rule
+
+Production EXE protection and protected/non-standard bodies in the managed donor mean exact protected routine sequencing should be recovered with narrow runtime traces. Do not broad-unpack merely because an internal branch is unknown.
