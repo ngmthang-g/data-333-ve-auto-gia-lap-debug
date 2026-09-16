@@ -1,20 +1,20 @@
 feature,description,method_rows,property_rows,image_rows,evidence,runtime_proof
-core_orchestration,"device discovery, per-device quest workers and global start/stop orchestration",23,3,0,metadata+pdb+assets,required for exact branch/order and success semantics
-auth_update,license/login/update control plane,48,3,0,metadata+pdb+assets,required for exact branch/order and success semantics
-account_login,account rotation and game login lifecycle,15,5,0,metadata+pdb+assets,required for exact branch/order and success semantics
-train_combat,auto train and combat UI state,19,7,24,metadata+pdb+assets,required for exact branch/order and success semantics
-party_follow,party creation/join/leave/follow,54,9,94,metadata+pdb+assets,required for exact branch/order and success semantics
+core_orchestration,"device discovery, per-device quest workers and global start/stop orchestration",13,3,0,metadata+pdb+assets,required for exact branch/order and success semantics
+auth_update,license/login/update control plane,13,2,0,metadata+pdb+assets,required for exact branch/order and success semantics
+account_login,account rotation and game login lifecycle,14,5,0,metadata+pdb+assets,required for exact branch/order and success semantics
+train_combat,auto train and combat UI state,15,5,24,metadata+pdb+assets,required for exact branch/order and success semantics
+party_follow,party creation/join/leave/follow,9,1,39,metadata+pdb+assets,required for exact branch/order and success semantics
 activity_actac,Ác Tặc activity state/navigation/combat,14,5,15,metadata+pdb+assets,required for exact branch/order and success semantics
 activity_thuylao,Thủy Lao activity state/navigation/combat,10,3,79,metadata+pdb+assets,required for exact branch/order and success semantics
-activity_tbd,TBD/ác lệnh-style mission flow,14,2,9,metadata+pdb+assets,required for exact branch/order and success semantics
+activity_tbd,TBD/ác lệnh-style mission flow,7,1,2,metadata+pdb+assets,required for exact branch/order and success semantics
 inventory_sell,"bag cleanup, trash/equipment filtering and selling",13,4,537,metadata+pdb+assets,required for exact branch/order and success semantics
-storage,bag <-> storage movement through UI,8,3,30,metadata+pdb+assets,required for exact branch/order and success semantics
+storage,bag <-> storage movement through UI,6,2,22,metadata+pdb+assets,required for exact branch/order and success semantics
 consumable_shop,buy/use medicine/mana/pet food/item rewards,16,6,2,metadata+pdb+assets,required for exact branch/order and success semantics
-heal_buff,"treatment, buff and HP/mana automation",110,5,14,metadata+pdb+assets,required for exact branch/order and success semantics
-travel_navigation,map/NPC travel and coordinate navigation,35,11,75,metadata+pdb+assets,required for exact branch/order and success semantics
-pet_mount,pet/follower/mount control,13,3,10,metadata+pdb+assets,required for exact branch/order and success semantics
+heal_buff,"treatment, buff and HP/mana automation",12,3,6,metadata+pdb+assets,required for exact branch/order and success semantics
+travel_navigation,map/NPC travel and coordinate navigation,29,9,39,metadata+pdb+assets,required for exact branch/order and success semantics
+pet_mount,pet/follower/mount control,12,3,10,metadata+pdb+assets,required for exact branch/order and success semantics
 trade_transfer,trade/item/gold transfer UI,14,7,3,metadata+pdb+assets,required for exact branch/order and success semantics
-quest_level,quest/level progression flows,75,27,31,metadata+pdb+assets,required for exact branch/order and success semantics
-captcha,captcha recognition/submit donor subsystem,38,4,2,metadata+pdb+assets,required for exact branch/order and success semantics
-vision_perception,"screen capture, template/color matching and coordinate extraction",66,1,218,metadata+pdb+assets,required for exact branch/order and success semantics
+quest_level,quest/level progression flows,54,21,30,metadata+pdb+assets,required for exact branch/order and success semantics
+captcha,captcha recognition/submit donor subsystem,10,4,2,metadata+pdb+assets,required for exact branch/order and success semantics
+vision_perception,"screen capture, template/color matching and coordinate extraction",24,1,218,metadata+pdb+assets,required for exact branch/order and success semantics
 scheduler,timed/hẹn giờ execution,10,4,0,metadata+pdb+assets,required for exact branch/order and success semantics
