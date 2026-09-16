@@ -1,0 +1,59 @@
+name: Materialize auto Debug database
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Debug directory or ZIP path inside repository'
+        required: false
+        default: 'Debug'
+  push:
+    paths:
+      - 'Debug/**'
+      - 'source/**'
+      - 'tools/materialize_auto_debug.py'
+      - '.github/workflows/materialize-auto-debug.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_PATH: ${{ github.event.inputs.source || 'Debug' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate source
+        shell: bash
+        run: |
+          if [ ! -e "$SOURCE_PATH" ]; then
+            echo "Source '$SOURCE_PATH' not found. Upload/extract the Debug snapshot or pass workflow_dispatch input 'source'."
+            exit 1
+          fi
+
+      - name: Materialize safe indexes
+        run: |
+          python tools/materialize_auto_debug.py \
+            --source "$SOURCE_PATH" \
+            --repo-root .
+
+      - name: Commit generated database
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add database/generated
+          if git diff --cached --quiet; then
+            echo "No generated data changes."
+          else
+            git commit -m "data: regenerate auto Debug indexes"
+            git push
+          fi
