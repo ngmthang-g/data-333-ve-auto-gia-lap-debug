@@ -1,0 +1,10 @@
+assembly,rid,parent_kind,parent_type,member_name,feature_tags
+Auto_ThanLong_obfusca.exe,309,TypeRef,System.IO.File,ReadAllText,
+Auto_ThanLong_obfusca.exe,347,TypeRef,System.IO.File,WriteAllText,
+Auto_ThanLong_obfusca.exe,471,TypeRef,System.IO.File,Exists,
+Auto_ThanLong_obfusca.exe,504,TypeRef,System.IO.DirectoryInfo,.ctor,
+Auto_ThanLong_obfusca.exe,505,TypeRef,System.IO.DirectoryInfo,GetFiles,
+Auto_ThanLong_obfusca.exe,506,TypeRef,System.IO.FileSystemInfo,get_Name,
+Auto_ThanLong_obfusca.exe,508,TypeRef,System.IO.FileSystemInfo,get_FullName,
+Auto_ThanLong_obfusca.exe,509,TypeRef,System.IO.File,ReadAllLines,
+Auto_ThanLong_obfusca.exe,603,TypeRef,System.IO.Directory,GetParent,
