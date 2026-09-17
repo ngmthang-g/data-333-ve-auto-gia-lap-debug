@@ -1,3 +1,4 @@
+# Canonical DATA-333 CSV/JSON datasets are committed directly; no transport payload is required.
 name: Validate DATA-333
 
 on:
