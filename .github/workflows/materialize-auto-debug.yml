@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - main
       - analysis/bootstrap-auto-debug
     paths:
       - 'database/**'
