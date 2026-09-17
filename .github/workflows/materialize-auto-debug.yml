@@ -6,7 +6,7 @@ on:
     branches:
       - analysis/bootstrap-auto-debug
     paths:
-      - 'materialized_payload_v4/**'
+      - 'materialized_payload_v5/**'
       - 'database/**'
       - 'analysis/**'
       - 'research/**'
@@ -28,18 +28,16 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Expand canonical high-volume database payload
+      - name: Reconstruct and expand canonical high-volume database payload
         shell: bash
         run: |
           set -euo pipefail
-          PAYLOAD='materialized_payload_v4/database-high-volume.tar.xz'
-          test -s "$PAYLOAD"
-          # Integrity is already guaranteed by Git's blob object. Validate the
-          # compressed stream/archive itself before extraction rather than
-          # duplicating a brittle hard-coded SHA-256 in this workflow.
-          xz -t "$PAYLOAD"
-          tar -tJf "$PAYLOAD" >/dev/null
-          tar -xJf "$PAYLOAD" -C .
+          test -s materialized_payload_v5/chunk_00
+          test -s materialized_payload_v5/chunk_09
+          cat materialized_payload_v5/chunk_* | base64 -d > /tmp/database-high-volume.tar.xz
+          xz -t /tmp/database-high-volume.tar.xz
+          tar -tJf /tmp/database-high-volume.tar.xz >/dev/null
+          tar -xJf /tmp/database-high-volume.tar.xz -C .
 
       - name: Refresh manifest and validate database
         run: python tools/materialize_auto_debug.py --repo-root . --refresh-manifest --validate-only
