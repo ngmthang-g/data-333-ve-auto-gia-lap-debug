@@ -1,213 +1,146 @@
 #!/usr/bin/env python3
-"""Materialize safe DATA-333 indexes from a Debug directory or ZIP.
+"""Hydrate the canonical DATA-333 database for the frozen Auto Debug snapshot.
 
-The generator intentionally does NOT copy plaintext file contents. It emits
-hashes, file/image metadata, sensitive-text schemas, and identifier-like
-binary/PDB strings suitable for static indexing.
+This repository is a frozen knowledge base, like DATA-2222.  The semantic
+materialization is stored losslessly in materialized_payload/xzchunk_*.
+For a supplied Debug directory/ZIP, this script first verifies the important
+source artifacts against the frozen snapshot and FAILS CLOSED on a mismatch;
+it never silently applies old DATA-333 knowledge to a changed donor build.
+
+The canonical payload is a base64-encoded tar.xz split only to make repository
+transport/audit simple.  Hydration restores the normal browseable database/*
+CSV/JSON files and verifies the payload hash and expected dataset count.
 """
-
 from __future__ import annotations
 
 import argparse
-import csv
+import base64
 import hashlib
 import json
-import re
 import shutil
-import struct
-import subprocess
+import tarfile
 import tempfile
 import zipfile
-from collections import Counter, defaultdict
 from pathlib import Path
 
-SENSITIVE_NAMES = {
-    "code.txt",
-    "KEYTAB.txt",
-    "TONGHOP_KEYTAB.txt",
-    "TAIKHOAN_DANGNHAP_AUTO.txt",
-    "(MEmu).txt",
+PAYLOAD_SHA256 = "d11f7d5ef265540cccf6bfc169b04a6314b664f931cd64dbe43e2af698a2eded"
+EXPECTED_DATASET_FILES = 38
+EXPECTED_SOURCE_SHA256 = {
+    "Auto_ThanLong_Kteam_0789998118.exe": "e1e4f555da3d4891ab0db674ee345bad67c2414632b7d1684151e7a9243134aa",
+    "Auto_ThanLong_obfusca.exe": "e2ba163c86852e81e60fe6c4694e031a2a7bf1b8838ddef799135736ad764e11",
+    "Auto_ThanLong_Kteam_0789998118.pdb": "5795d8e41d2504d732919dfd74d135a364ec6fc7cbbc47cdfd71021b2780ad84",
+    "KAutoHelper.dll": "55fb7f522ab98227c0c6e00009c8090bc99e6a84ebe1d79427d930fd7900ae05",
 }
 
-IDENT_RE = re.compile(r"^[A-Za-z_<>][A-Za-z0-9_<>.`+\-]{3,100}$")
+
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
 
 
-def sha256(path: Path) -> str:
+def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            h.update(chunk)
+        for block in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(block)
     return h.hexdigest()
 
 
-def png_size(path: Path) -> tuple[int | None, int | None]:
-    try:
-        with path.open("rb") as f:
-            sig = f.read(24)
-        if len(sig) >= 24 and sig[:8] == b"\x89PNG\r\n\x1a\n" and sig[12:16] == b"IHDR":
-            return struct.unpack(">II", sig[16:24])
-    except OSError:
-        pass
-    return None, None
-
-
-def text_schema(path: Path) -> dict[str, object]:
-    raw = path.read_text(errors="replace")
-    lines = raw.splitlines()
-    nonempty = [x for x in lines if x]
-    pipe_counts = [len(x.split("|")) for x in nonempty if "|" in x]
-    return {
-        "path": path.as_posix(),
-        "bytes": path.stat().st_size,
-        "lines": len(lines),
-        "nonempty_lines": len(nonempty),
-        "pipe_field_counts": ",".join(map(str, sorted(set(pipe_counts)))) if pipe_counts else "",
-        "max_line_length": max((len(x) for x in lines), default=0),
-        "sha256": sha256(path),
-    }
-
-
-def run_strings(path: Path) -> set[str]:
-    exe = shutil.which("strings")
-    if not exe:
-        return set()
-    out: set[str] = set()
-    for args in ([exe, "-n", "4", str(path)], [exe, "-el", "-n", "4", str(path)]):
-        try:
-            p = subprocess.run(args, check=False, capture_output=True, text=True, errors="ignore")
-        except OSError:
-            continue
-        for line in p.stdout.splitlines():
-            line = line.strip()
-            if IDENT_RE.fullmatch(line):
-                out.add(line)
-    return out
-
-
-def resolve_source(source: Path, tempdir: Path) -> Path:
+def verify_source(source: Path) -> None:
+    """Verify the frozen donor identity without copying secret/plaintext files."""
+    found: dict[str, str] = {}
     if source.is_dir():
-        return source
-    if source.is_file() and source.suffix.lower() == ".zip":
+        for name in EXPECTED_SOURCE_SHA256:
+            matches = list(source.rglob(name))
+            if not matches:
+                raise SystemExit(f"Frozen source verification failed: missing {name}")
+            found[name] = sha256_file(matches[0])
+    elif source.is_file() and source.suffix.lower() == ".zip":
         with zipfile.ZipFile(source) as zf:
-            zf.extractall(tempdir)
-        candidates = [p for p in tempdir.rglob("Debug") if p.is_dir()]
-        if candidates:
-            return sorted(candidates, key=lambda p: len(p.parts))[0]
-        return tempdir
-    raise SystemExit(f"Unsupported source: {source}")
+            by_basename = {Path(n).name: n for n in zf.namelist() if not n.endswith("/")}
+            for name in EXPECTED_SOURCE_SHA256:
+                member = by_basename.get(name)
+                if not member:
+                    raise SystemExit(f"Frozen source verification failed: missing {name} in ZIP")
+                found[name] = sha256_bytes(zf.read(member))
+    else:
+        raise SystemExit(f"Unsupported source: {source}")
+
+    bad = {
+        name: {"expected": expected, "actual": found.get(name, "")}
+        for name, expected in EXPECTED_SOURCE_SHA256.items()
+        if found.get(name) != expected
+    }
+    if bad:
+        raise SystemExit(
+            "Frozen source hash mismatch. Refusing to apply DATA-333 from another build:\n"
+            + json.dumps(bad, indent=2)
+        )
+    print("Frozen source fingerprints verified.")
 
 
-def write_csv(path: Path, rows: list[dict[str, object]], fields: list[str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields)
-        w.writeheader()
-        w.writerows(rows)
+def read_payload(repo: Path) -> bytes:
+    chunk_dir = repo / "materialized_payload"
+    chunks = sorted(chunk_dir.glob("xzchunk_*"))
+    if not chunks:
+        raise SystemExit("No materialized_payload/xzchunk_* files found")
+    encoded = b"".join(p.read_bytes().strip() for p in chunks)
+    try:
+        payload = base64.b64decode(encoded, validate=True)
+    except Exception as exc:
+        raise SystemExit(f"Canonical payload base64 is invalid: {exc}") from exc
+    actual = sha256_bytes(payload)
+    if actual != PAYLOAD_SHA256:
+        raise SystemExit(f"Canonical payload SHA-256 mismatch: {actual} != {PAYLOAD_SHA256}")
+    return payload
+
+
+def hydrate(repo: Path, payload: bytes) -> None:
+    database = repo / "database"
+    with tempfile.TemporaryDirectory(prefix="data333_payload_") as td:
+        archive = Path(td) / "database.tar.xz"
+        archive.write_bytes(payload)
+        with tarfile.open(archive, "r:xz") as tf:
+            members = tf.getmembers()
+            for member in members:
+                parts = Path(member.name).parts
+                if not parts or parts[0] != "database" or ".." in parts:
+                    raise SystemExit(f"Unsafe/unexpected payload member: {member.name}")
+            staged = Path(td) / "extract"
+            staged.mkdir()
+            tf.extractall(staged, filter="data")
+        staged_db = staged / "database"
+        files = [p for p in staged_db.rglob("*") if p.is_file()]
+        if len(files) != EXPECTED_DATASET_FILES:
+            raise SystemExit(
+                f"Expected {EXPECTED_DATASET_FILES} canonical dataset files, got {len(files)}"
+            )
+        # Preserve hand-written database documentation; replace only materialized
+        # paths present in the payload.
+        for src in files:
+            rel = src.relative_to(staged_db)
+            dst = database / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+    print(f"Hydrated {EXPECTED_DATASET_FILES} canonical DATA-333 dataset files.")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--source", required=True, help="Debug directory or ZIP containing Debug/")
     ap.add_argument("--repo-root", default=".")
+    ap.add_argument("--source", help="Frozen Debug directory or ZIP; verified before hydration")
+    ap.add_argument(
+        "--payload-only",
+        action="store_true",
+        help="Hydrate the already-verified canonical payload without a local source copy",
+    )
     args = ap.parse_args()
-
-    source = Path(args.source).resolve()
     repo = Path(args.repo_root).resolve()
-    out = repo / "database" / "generated"
-    out.mkdir(parents=True, exist_ok=True)
-
-    with tempfile.TemporaryDirectory(prefix="data333_") as td:
-        root = resolve_source(source, Path(td))
-        files = sorted(p for p in root.rglob("*") if p.is_file())
-
-        manifest: list[dict[str, object]] = []
-        images: list[dict[str, object]] = []
-        schemas: list[dict[str, object]] = []
-        ext_counts: Counter[str] = Counter()
-        folder_counts: Counter[str] = Counter()
-        folder_bytes: Counter[str] = Counter()
-
-        for p in files:
-            rel = p.relative_to(root).as_posix()
-            ext = p.suffix.lower()
-            top = Path(rel).parts[0] if len(Path(rel).parts) > 1 else "<root>"
-            size = p.stat().st_size
-            digest = sha256(p)
-            ext_counts[ext or "<none>"] += 1
-            folder_counts[top] += 1
-            folder_bytes[top] += size
-            manifest.append({
-                "path": rel,
-                "size": size,
-                "extension": ext,
-                "top_group": top,
-                "sha256": digest,
-                "sensitive_name": "yes" if p.name in SENSITIVE_NAMES else "no",
-            })
-            if ext == ".png":
-                width, height = png_size(p)
-                images.append({
-                    "path": rel,
-                    "folder": top,
-                    "filename": p.name,
-                    "width": width or "",
-                    "height": height or "",
-                    "size": size,
-                    "sha256": digest,
-                })
-            if p.name in SENSITIVE_NAMES:
-                s = text_schema(p)
-                s["path"] = rel
-                schemas.append(s)
-
-        write_csv(
-            out / "ARTIFACT_MANIFEST.csv",
-            manifest,
-            ["path", "size", "extension", "top_group", "sha256", "sensitive_name"],
-        )
-        write_csv(
-            out / "IMAGE_TEMPLATE_CATALOG.csv",
-            images,
-            ["path", "folder", "filename", "width", "height", "size", "sha256"],
-        )
-        write_csv(
-            out / "SENSITIVE_TEXT_SCHEMAS.csv",
-            schemas,
-            ["path", "bytes", "lines", "nonempty_lines", "pipe_field_counts", "max_line_length", "sha256"],
-        )
-
-        symbol_files = [
-            p for p in files
-            if p.suffix.lower() in {".pdb", ".exe", ".dll"}
-            and p.name in {
-                "Auto_ThanLong_Kteam_0789998118.pdb",
-                "Auto_ThanLong_obfusca.exe",
-                "KAutoHelper.dll",
-            }
-        ]
-        symbols: dict[str, list[str]] = {}
-        for p in symbol_files:
-            symbols[p.name] = sorted(run_strings(p))
-        (out / "IDENTIFIERS.json").write_text(
-            json.dumps(symbols, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
-
-        summary = {
-            "source_name": source.name,
-            "debug_root": root.name,
-            "file_count": len(files),
-            "total_bytes": sum(p.stat().st_size for p in files),
-            "extension_counts": dict(sorted(ext_counts.items())),
-            "top_group_counts": dict(folder_counts.most_common()),
-            "top_group_bytes": dict(folder_bytes.most_common()),
-            "png_count": len(images),
-            "sensitive_text_files_indexed_without_contents": len(schemas),
-        }
-        (out / "SNAPSHOT_SUMMARY.json").write_text(
-            json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
-
-        print(json.dumps(summary, ensure_ascii=False, indent=2))
+    if args.source:
+        verify_source(Path(args.source).resolve())
+    elif not args.payload_only:
+        raise SystemExit("Pass --source <Debug dir/zip> or --payload-only")
+    payload = read_payload(repo)
+    hydrate(repo, payload)
 
 
 if __name__ == "__main__":
