@@ -1,4 +1,4 @@
-name: Materialize and validate DATA-333
+name: Validate DATA-333
 
 on:
   workflow_dispatch:
@@ -6,42 +6,28 @@ on:
     branches:
       - analysis/bootstrap-auto-debug
     paths:
-      - 'materialized_payload_v5/**'
       - 'database/**'
       - 'analysis/**'
       - 'research/**'
       - 'tools/materialize_auto_debug.py'
+      - 'AI_BOOTSTRAP.md'
+      - 'AI_ROUTER.md'
+      - 'AUTO_FEATURE_READINESS.md'
       - '.github/workflows/materialize-auto-debug.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  materialize:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Reconstruct and expand canonical high-volume database payload
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s materialized_payload_v5/chunk_00
-          test -s materialized_payload_v5/chunk_09
-          cat materialized_payload_v5/chunk_* | base64 -d > /tmp/database-high-volume.tar.xz
-          xz -t /tmp/database-high-volume.tar.xz
-          tar -tJf /tmp/database-high-volume.tar.xz >/dev/null
-          tar -xJf /tmp/database-high-volume.tar.xz -C .
-
-      - name: Refresh manifest and validate database
-        run: python tools/materialize_auto_debug.py --repo-root . --refresh-manifest --validate-only
-
+      - name: Validate canonical materialized database
+        run: python tools/materialize_auto_debug.py --repo-root . --validate-only
       - name: Verify routing entrypoints and high-volume datasets
         shell: bash
         run: |
@@ -68,17 +54,3 @@ jobs:
           test -f database/snapshot/ARTIFACT_MANIFEST_0001_0750.csv
           test -f database/snapshot/ARTIFACT_MANIFEST_0751_1450.csv
           test -f research/AUTO_RUNTIME_PROOF_QUEUE.md
-
-      - name: Commit materialized database when changed
-        shell: bash
-        run: |
-          set -euo pipefail
-          if git diff --quiet -- database; then
-            echo 'Canonical database already materialized.'
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add database
-          git commit -m 'data: materialize complete DATA-333 high-volume database'
-          git push
