@@ -2,11 +2,12 @@
 """Hydrate the frozen DATA-333 database for the supplied Auto Debug snapshot.
 
 The canonical database is stored losslessly in materialized_payload/xzchunk_*.
-Each chunk is independently base64-encoded; decode chunks separately, concatenate
-binary bytes, verify the canonical payload hash, then hydrate database/.
+Chunks may contain transport line wrapping; normalize whitespace, decode each
+chunk independently, concatenate binary bytes, verify the canonical payload
+hash, then hydrate database/.
 
-If --source is supplied, the donor fingerprints are verified first so DATA-333
-is never silently applied to another build.
+If --source is supplied, donor fingerprints are verified first so DATA-333 is
+never silently applied to another build.
 """
 from __future__ import annotations
 
@@ -75,14 +76,13 @@ def verify_source(source: Path) -> None:
 
 
 def read_payload(repo: Path) -> bytes:
-    chunk_dir = repo / "materialized_payload"
-    chunks = sorted(chunk_dir.glob("xzchunk_*"))
+    chunks = sorted((repo / "materialized_payload").glob("xzchunk_*"))
     if not chunks:
         raise SystemExit("No materialized_payload/xzchunk_* files found")
 
     decoded_parts: list[bytes] = []
     for chunk in chunks:
-        encoded = chunk.read_bytes().strip()
+        encoded = b"".join(chunk.read_bytes().split())
         try:
             decoded_parts.append(base64.b64decode(encoded, validate=True))
         except Exception as exc:
@@ -92,7 +92,7 @@ def read_payload(repo: Path) -> bytes:
     actual = sha256_bytes(payload)
     if actual != PAYLOAD_SHA256:
         raise SystemExit(f"Canonical payload SHA-256 mismatch: {actual} != {PAYLOAD_SHA256}")
-    print(f"Canonical payload verified from {len(chunks)} independently encoded chunks.")
+    print(f"Canonical payload verified from {len(chunks)} encoded chunks.")
     return payload
 
 
