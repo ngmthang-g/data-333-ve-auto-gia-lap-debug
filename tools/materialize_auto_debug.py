@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Hydrate the canonical DATA-333 database for the frozen Auto Debug snapshot.
 
-This repository is a frozen knowledge base, like DATA-2222.  The semantic
+This repository is a frozen knowledge base, like DATA-2222. The semantic
 materialization is stored losslessly in materialized_payload/xzchunk_*.
 For a supplied Debug directory/ZIP, this script first verifies the important
 source artifacts against the frozen snapshot and FAILS CLOSED on a mismatch;
 it never silently applies old DATA-333 knowledge to a changed donor build.
 
 The canonical payload is a base64-encoded tar.xz split only to make repository
-transport/audit simple.  Hydration restores the normal browseable database/*
+transport/audit simple. Hydration restores the normal browseable database/*
 CSV/JSON files and verifies the payload hash and expected dataset count.
 """
 from __future__ import annotations
@@ -23,7 +23,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-PAYLOAD_SHA256 = "d11f7d5ef265540cccf6bfc169b04a6314b664f931cd64dbe43e2af698a2eded"
+PAYLOAD_SHA256 = "8e3fde1586105e2d3f590b0d37404e7eaa3e5edf570cf7d53bb8a255860f389b"
 EXPECTED_DATASET_FILES = 38
 EXPECTED_SOURCE_SHA256 = {
     "Auto_ThanLong_Kteam_0789998118.exe": "e1e4f555da3d4891ab0db674ee345bad67c2414632b7d1684151e7a9243134aa",
@@ -114,8 +114,6 @@ def hydrate(repo: Path, payload: bytes) -> None:
             raise SystemExit(
                 f"Expected {EXPECTED_DATASET_FILES} canonical dataset files, got {len(files)}"
             )
-        # Preserve hand-written database documentation; replace only materialized
-        # paths present in the payload.
         for src in files:
             rel = src.relative_to(staged_db)
             dst = database / rel
