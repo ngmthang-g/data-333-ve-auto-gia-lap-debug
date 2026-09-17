@@ -2,12 +2,9 @@
 """Hydrate the frozen DATA-333 database for the supplied Auto Debug snapshot.
 
 The canonical database is stored losslessly in materialized_payload/xzchunk_*.
-Chunks may contain transport line wrapping; normalize whitespace, decode each
-chunk independently, concatenate binary bytes, verify the canonical payload
-hash, then hydrate database/.
-
-If --source is supplied, donor fingerprints are verified first so DATA-333 is
-never silently applied to another build.
+Transport chunks may contain wrapping or redundant trailing base64 padding. Each
+chunk is normalized, decoded independently, binary-concatenated, and the final
+payload must match PAYLOAD_SHA256 before extraction.
 """
 from __future__ import annotations
 
@@ -75,20 +72,21 @@ def verify_source(source: Path) -> None:
     print("Frozen source fingerprints verified.")
 
 
+def decode_chunk(path: Path) -> bytes:
+    encoded = b"".join(path.read_bytes().split())
+    core = encoded.rstrip(b"=")
+    normalized = core + (b"=" * ((-len(core)) % 4))
+    try:
+        return base64.b64decode(normalized, validate=True)
+    except Exception as exc:
+        raise SystemExit(f"Canonical payload chunk {path.name} is invalid base64: {exc}") from exc
+
+
 def read_payload(repo: Path) -> bytes:
     chunks = sorted((repo / "materialized_payload").glob("xzchunk_*"))
     if not chunks:
         raise SystemExit("No materialized_payload/xzchunk_* files found")
-
-    decoded_parts: list[bytes] = []
-    for chunk in chunks:
-        encoded = b"".join(chunk.read_bytes().split())
-        try:
-            decoded_parts.append(base64.b64decode(encoded, validate=True))
-        except Exception as exc:
-            raise SystemExit(f"Canonical payload chunk {chunk.name} is invalid base64: {exc}") from exc
-
-    payload = b"".join(decoded_parts)
+    payload = b"".join(decode_chunk(chunk) for chunk in chunks)
     actual = sha256_bytes(payload)
     if actual != PAYLOAD_SHA256:
         raise SystemExit(f"Canonical payload SHA-256 mismatch: {actual} != {PAYLOAD_SHA256}")
@@ -110,7 +108,6 @@ def hydrate(repo: Path, payload: bytes) -> None:
             staged = Path(td) / "extract"
             staged.mkdir()
             tf.extractall(staged, filter="data")
-
         staged_db = staged / "database"
         files = [p for p in staged_db.rglob("*") if p.is_file()]
         if len(files) != EXPECTED_DATASET_FILES:
