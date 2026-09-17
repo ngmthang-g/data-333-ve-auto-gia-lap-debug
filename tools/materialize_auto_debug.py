@@ -24,7 +24,7 @@ REQUIRED_ROWS={
 'database/dotnet/METHOD_CATALOG_1201_1294.csv':94,
 'database/control/KAUTOHELPER_CALL_GRAPH.csv':822,
 'database/control/KAUTOHELPER_API.csv':224,
-'database/features/FEATURE_METHOD_MAP.csv':290,
+'database/features/FEATURE_METHOD_MAP.csv':295,
 'database/features/FEATURE_ASSET_MAP.csv':1028,
 'database/assets/IMAGE_TEMPLATE_INDEX_0001_0700.csv':700,
 'database/assets/IMAGE_TEMPLATE_INDEX_0701_1393.csv':693,
