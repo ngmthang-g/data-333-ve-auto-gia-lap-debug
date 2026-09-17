@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""Hydrate the canonical DATA-333 database for the frozen Auto Debug snapshot.
+"""Hydrate the frozen DATA-333 database for the supplied Auto Debug snapshot.
 
-This repository is a frozen knowledge base, like DATA-2222. The semantic
-materialization is stored losslessly in materialized_payload/xzchunk_*.
-For a supplied Debug directory/ZIP, this script first verifies the important
-source artifacts against the frozen snapshot and FAILS CLOSED on a mismatch;
-it never silently applies old DATA-333 knowledge to a changed donor build.
+The canonical database is stored losslessly in materialized_payload/xzchunk_*.
+Each chunk is independently base64-encoded; decode chunks separately, concatenate
+binary bytes, verify the canonical payload hash, then hydrate database/.
 
-The canonical payload is a base64-encoded tar.xz split only to make repository
-transport/audit simple. Hydration restores the normal browseable database/*
-CSV/JSON files and verifies the payload hash and expected dataset count.
+If --source is supplied, the donor fingerprints are verified first so DATA-333
+is never silently applied to another build.
 """
 from __future__ import annotations
 
@@ -46,7 +43,6 @@ def sha256_file(path: Path) -> str:
 
 
 def verify_source(source: Path) -> None:
-    """Verify the frozen donor identity without copying secret/plaintext files."""
     found: dict[str, str] = {}
     if source.is_dir():
         for name in EXPECTED_SOURCE_SHA256:
@@ -83,14 +79,20 @@ def read_payload(repo: Path) -> bytes:
     chunks = sorted(chunk_dir.glob("xzchunk_*"))
     if not chunks:
         raise SystemExit("No materialized_payload/xzchunk_* files found")
-    encoded = b"".join(p.read_bytes().strip() for p in chunks)
-    try:
-        payload = base64.b64decode(encoded, validate=True)
-    except Exception as exc:
-        raise SystemExit(f"Canonical payload base64 is invalid: {exc}") from exc
+
+    decoded_parts: list[bytes] = []
+    for chunk in chunks:
+        encoded = chunk.read_bytes().strip()
+        try:
+            decoded_parts.append(base64.b64decode(encoded, validate=True))
+        except Exception as exc:
+            raise SystemExit(f"Canonical payload chunk {chunk.name} is invalid base64: {exc}") from exc
+
+    payload = b"".join(decoded_parts)
     actual = sha256_bytes(payload)
     if actual != PAYLOAD_SHA256:
         raise SystemExit(f"Canonical payload SHA-256 mismatch: {actual} != {PAYLOAD_SHA256}")
+    print(f"Canonical payload verified from {len(chunks)} independently encoded chunks.")
     return payload
 
 
@@ -108,12 +110,11 @@ def hydrate(repo: Path, payload: bytes) -> None:
             staged = Path(td) / "extract"
             staged.mkdir()
             tf.extractall(staged, filter="data")
+
         staged_db = staged / "database"
         files = [p for p in staged_db.rglob("*") if p.is_file()]
         if len(files) != EXPECTED_DATASET_FILES:
-            raise SystemExit(
-                f"Expected {EXPECTED_DATASET_FILES} canonical dataset files, got {len(files)}"
-            )
+            raise SystemExit(f"Expected {EXPECTED_DATASET_FILES} canonical dataset files, got {len(files)}")
         for src in files:
             rel = src.relative_to(staged_db)
             dst = database / rel
@@ -126,19 +127,14 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo-root", default=".")
     ap.add_argument("--source", help="Frozen Debug directory or ZIP; verified before hydration")
-    ap.add_argument(
-        "--payload-only",
-        action="store_true",
-        help="Hydrate the already-verified canonical payload without a local source copy",
-    )
+    ap.add_argument("--payload-only", action="store_true", help="Hydrate canonical payload without local source copy")
     args = ap.parse_args()
     repo = Path(args.repo_root).resolve()
     if args.source:
         verify_source(Path(args.source).resolve())
     elif not args.payload_only:
         raise SystemExit("Pass --source <Debug dir/zip> or --payload-only")
-    payload = read_payload(repo)
-    hydrate(repo, payload)
+    hydrate(repo, read_payload(repo))
 
 
 if __name__ == "__main__":
