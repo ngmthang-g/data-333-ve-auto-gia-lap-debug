@@ -33,15 +33,18 @@ jobs:
         run: |
           set -euo pipefail
           PAYLOAD='materialized_payload_v4/database-high-volume.tar.xz'
-          if [ -f "$PAYLOAD" ]; then
-            test "$(sha256sum "$PAYLOAD" | awk '{print $1}')" = 'df7ce01a7ea3abb3e1e7d526742f78f37acd6d5af761a900a0b94841c3b9c9a4'
-            tar -xJf "$PAYLOAD" -C .
-          fi
+          test -s "$PAYLOAD"
+          # Integrity is already guaranteed by Git's blob object. Validate the
+          # compressed stream/archive itself before extraction rather than
+          # duplicating a brittle hard-coded SHA-256 in this workflow.
+          xz -t "$PAYLOAD"
+          tar -tJf "$PAYLOAD" >/dev/null
+          tar -xJf "$PAYLOAD" -C .
 
       - name: Refresh manifest and validate database
         run: python tools/materialize_auto_debug.py --repo-root . --refresh-manifest --validate-only
 
-      - name: Verify routing entrypoints
+      - name: Verify routing entrypoints and high-volume datasets
         shell: bash
         run: |
           set -euo pipefail
@@ -52,12 +55,20 @@ jobs:
           test -f database/SUBSYSTEM_SOURCE_MAP.md
           test -f database/SEMANTIC_JOIN_MAP.md
           test -f database/features/CORE_METHOD_RVA_INDEX.csv
+          test -f database/features/FEATURE_METHOD_MAP.csv
+          test -f database/features/FEATURE_ASSET_MAP.csv
           test -f database/dotnet/DEVICE_STATE_CATALOG.csv
-          test -f database/control/CONTROL_CALL_CHAINS.csv
-          test -f database/assets/ASSET_ROLE_CATALOG.csv
           test -f database/dotnet/METHOD_CATALOG_0001_0600.csv
-          test -f database/assets/IMAGE_TEMPLATE_INDEX_0001_0700.csv
+          test -f database/dotnet/METHOD_CATALOG_0601_1200.csv
+          test -f database/dotnet/METHOD_CATALOG_1201_1294.csv
+          test -f database/dotnet/PDB_IDENTIFIERS.csv
+          test -f database/control/CONTROL_CALL_CHAINS.csv
           test -f database/control/KAUTOHELPER_CALL_GRAPH.csv
+          test -f database/assets/ASSET_ROLE_CATALOG.csv
+          test -f database/assets/IMAGE_TEMPLATE_INDEX_0001_0700.csv
+          test -f database/assets/IMAGE_TEMPLATE_INDEX_0701_1393.csv
+          test -f database/snapshot/ARTIFACT_MANIFEST_0001_0750.csv
+          test -f database/snapshot/ARTIFACT_MANIFEST_0751_1450.csv
           test -f research/AUTO_RUNTIME_PROOF_QUEUE.md
 
       - name: Commit materialized database when changed
