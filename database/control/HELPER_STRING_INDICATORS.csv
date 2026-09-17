@@ -1,0 +1,16 @@
+category,literal,source,sensitive
+adb_command,adb.exe,KAutoHelper.dll,no
+adb_command,ADB Path not Exits!!!,KAutoHelper.dll,no
+adb_command,adb devices,KAutoHelper.dll,no
+adb_command,adb connect 127.0.0.1:,KAutoHelper.dll,no
+adb_command,adb -s ,KAutoHelper.dll,no
+adb_command,adb -s {0} shell input tap {1} {2},KAutoHelper.dll,no
+adb_command,adb -s {0} shell input swipe {1} {2} {3} {4} {5},KAutoHelper.dll,no
+adb_command,adb -s {0} shell input keyevent {1},KAutoHelper.dll,no
+adb_command,"adb -s {0} shell input text ""{1}""",KAutoHelper.dll,no
+adb_command,"adb -s {0} shell screencap -p ""{1}""",KAutoHelper.dll,no
+adb_command,"adb -s {0} pull ""{1}""",KAutoHelper.dll,no
+adb_command,"adb -s {0} shell rm -f ""{1}""",KAutoHelper.dll,no
+adb_command,"adb -s {0} shell dumpsys display | Find ""mCurrentDisplayRect""",KAutoHelper.dll,no
+nox_config,\Local\Nox\multi.ini,KAutoHelper.dll,no
+process_discovery,netstat.exe,KAutoHelper.dll,no

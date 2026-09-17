@@ -1,0 +1,4 @@
+feature,state,methods,asset_evidence,inference
+activity_thuylao,TRANGTHAI_THUYLAO|thuylao|sttbaithuylao,vaothuylao|hdthuylao|toinpcthuylao|setupautothuylao,"thuylao/stage position templates; hoatdong/sttthuylao1..12, vaothuylao, endthuylao",stage index 1..12 strongly evidenced; exact transitions still protected
+activity_actac,TRANGTHAITIMACTAC|TRANGTHAI_ACTAC|toado_actac|HDACTAC|MAPACTAC,danh_actac|gettoado_actac|toivitri_actac|HD_ACTAC,"thuylao/vitriactac1..7; hoatdong/endactac, khieuchienactac, pbactac",coordinate-driven activity with combat/end detectors; exact branch order pending
+activity_tbd,chayTBD|MaxTBD,toinpcTBD|nhannvTBD|tranvTBD|huynvTBD|dilamnvuTBD|laylenhbai|checklenhbai|check_dinhviphu,"hoatdong/tbd, tentbd, lenhbai, dinhviphu, bosstbd1, endtbd*",mission accept/locate/execute/turn-in family strongly evidenced

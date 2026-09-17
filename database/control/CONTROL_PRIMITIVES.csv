@@ -1,0 +1,18 @@
+primitive,source,channel,role,active_in_main_static_refs
+device_window_discovery,KAutoHelper.AutoControl.FindWindowHandlesFromProcesses,Win32,resolve emulator HWND from processes,yes
+window_text,KAutoHelper.AutoControl.GetText + MainWindow.GetWindowText/GetWindowTextLength,Win32,read window/control text,yes
+click_position,KAutoHelper.AutoControl.SendClickOnPosition,Win32 SendMessage/PostMessage,background-position click against HWND,yes
+text_input,KAutoHelper.AutoControl.SendTextKeyBoard,Win32 keyboard message,text input,yes
+key_press,KAutoHelper.AutoControl.SendKeyBoardPress,Win32 keyboard message,key press,yes
+drag,KAutoHelper.AutoControl.SendDragAndDropOnPosition,Win32 mouse message,drag gesture,yes
+capture_window,KAutoHelper.CaptureHelper.CaptureWindow,GDI/window capture,screen observation,yes
+crop,KAutoHelper.CaptureHelper.CropImage,image processing,ROI extraction,yes
+template_match_one,KAutoHelper.ImageScanOpenCV.FindOutPoint,OpenCV/EmguCV,find one template point,yes
+template_match_many,KAutoHelper.ImageScanOpenCV.FindOutPoints,OpenCV/EmguCV,find multiple template points,yes
+ocr,TesseractEngine.Process + Page.GetText,Tesseract,OCR text from image,yes
+delay,KAutoHelper.ADBHelper.Delay,thread delay helper,timing/retry delay; despite class name it does not require ADB,yes
+adb_tap,KAutoHelper.ADBHelper.Tap,ADB shell input,available in bundled helper,no_static_reference
+adb_swipe,KAutoHelper.ADBHelper.Swipe,ADB shell input,available in bundled helper,no_static_reference
+adb_screenshot,KAutoHelper.ADBHelper.ScreenShoot,ADB screencap/pull,available in bundled helper,no_static_reference
+adb_connect_nox,KAutoHelper.ADBHelper.ConnectNox,ADB localhost,available in bundled helper,no_static_reference
+netstat_port_discovery,KAutoHelper.ProcessHelper.GetNetStatPorts + Port.pid/port_number,host process/network discovery,correlate process with listening port,yes

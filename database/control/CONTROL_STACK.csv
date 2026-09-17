@@ -1,0 +1,13 @@
+stack_id,main_surface,helper_chain,native_or_framework,role,main_static_reference,confidence
+WIN32-CLICK,KAutoHelper.AutoControl.SendClickOnPosition,MakeLParamFromXY -> PostMessage x5,user32 PostMessage,background click to HWND coordinates,yes,VERIFIED
+WIN32-DRAG,KAutoHelper.AutoControl.SendDragAndDropOnPosition,MakeLParamFromXY -> PostMessage -> Thread.Sleep -> PostMessage,user32 PostMessage,background drag gesture,yes,VERIFIED
+WIN32-TEXT,KAutoHelper.AutoControl.SendTextKeyBoard,keyboard message helper,user32 messaging,text/keyboard input to emulator window,yes,VERIFIED
+WIN32-KEY,KAutoHelper.AutoControl.SendKeyBoardPress,keyboard message helper,user32 messaging,key press to emulator window,yes,VERIFIED
+CAPTURE-WINDOW,KAutoHelper.CaptureHelper.CaptureWindow,GetWindowDC -> GetWindowRect -> CreateCompatibleDC/Bitmap -> SelectObject -> BitBlt -> FromHbitmap -> DeleteObject,user32 + gdi32,capture emulator HWND without ADB screencap,yes,VERIFIED
+VISION-ONE,KAutoHelper.ImageScanOpenCV.FindOutPoint,Image -> MatchTemplate -> MinMax -> result point,EmguCV/OpenCV,single template location,yes,VERIFIED
+VISION-MANY,KAutoHelper.ImageScanOpenCV.FindOutPoints,Image -> MatchTemplate -> MinMax/mark -> point list,EmguCV/OpenCV,multiple template locations/counting,yes,VERIFIED
+OCR,TesseractEngine.Process + Page.GetText,engine init/config -> Process(image) -> GetText,Tesseract,text/number recognition from screen crops,yes,VERIFIED
+NOX-IDENTITY,NoxMultiIni.GetNoxTitleFromADBPort,GetNetStatPorts + GetNoxMultiIni -> Port/PID correlation -> Process.GetProcessById -> MainWindowTitle,netstat.exe + Nox multi.ini + System.Diagnostics.Process,correlate emulator instance/process/port/window,partial,VERIFIED_HELPER_CHAIN
+ADB-TAP,KAutoHelper.ADBHelper.Tap,format adb shell input tap -> ExecuteCMD,adb.exe,bundled ADB tap capability,no,VERIFIED_BUNDLED_NOT_MAIN_REFERENCED
+ADB-SWIPE,KAutoHelper.ADBHelper.Swipe,format adb shell input swipe -> ExecuteCMD,adb.exe,bundled ADB swipe capability,no,VERIFIED_BUNDLED_NOT_MAIN_REFERENCED
+ADB-SCREEN,KAutoHelper.ADBHelper.ScreenShoot,screencap -> pull -> load bitmap -> cleanup,adb.exe,bundled ADB screenshot capability,no,VERIFIED_BUNDLED_NOT_MAIN_REFERENCED

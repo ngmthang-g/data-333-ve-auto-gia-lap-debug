@@ -1,0 +1,49 @@
+{
+  "snapshot": "Debug-20260916T173818Z-1-001.zip",
+  "analysis_date": "2026-09-17",
+  "zip_entry_count": 1470,
+  "file_count": 1450,
+  "total_uncompressed_bytes": 146978306,
+  "total_compressed_bytes": 70724369,
+  "extension_counts": {
+    ".png": 1393,
+    ".dll": 36,
+    ".xml": 8,
+    ".txt": 6,
+    ".pdb": 3,
+    ".exe": 2,
+    ".config": 1,
+    ".traineddata": 1
+  },
+  "top_asset_groups": {
+    "hoatdong": 461,
+    "ItemSell_TrangVatPham": 435,
+    "saveImage": 218,
+    "itemrac": 91,
+    "thuylao": 59,
+    "PT": 35,
+    "level": 27,
+    "truyen": 27,
+    "Item_vaokho": 19,
+    "ItemSell_TrangNgoc": 11,
+    "tranthu": 4
+  },
+  "image_notes": {
+    "png_entries": 1393,
+    "dominant_dimension": "30x10",
+    "dominant_dimension_count_observed": 214,
+    "unreadable_or_malformed_png_observed": 3
+  },
+  "key_sha256": {
+    "Auto_ThanLong_Kteam_0789998118.exe": "e1e4f555da3d4891ab0db674ee345bad67c2414632b7d1684151e7a9243134aa",
+    "Auto_ThanLong_obfusca.exe": "e2ba163c86852e81e60fe6c4694e031a2a7bf1b8838ddef799135736ad764e11",
+    "Auto_ThanLong_Kteam_0789998118.pdb": "5795d8e41d2504d732919dfd74d135a364ec6fc7cbbc47cdfd71021b2780ad84",
+    "KAutoHelper.dll": "55fb7f522ab98227c0c6e00009c8090bc99e6a84ebe1d79427d930fd7900ae05"
+  },
+  "binary_characterization": {
+    "Auto_ThanLong_Kteam_0789998118.exe": "PE32 Windows GUI; Themida/.boot protected layout; clean managed call graph not directly recoverable",
+    "Auto_ThanLong_obfusca.exe": "managed .NET PE with obfuscated metadata; still useful alongside PDB",
+    "KAutoHelper.dll": "managed helper exposing ADB, Win32 input, capture, OpenCV and OCR primitives"
+  },
+  "sensitive_data_policy": "Raw values from credential/license-looking plaintext files are intentionally excluded; only schemas/fingerprints may be materialized."
+}

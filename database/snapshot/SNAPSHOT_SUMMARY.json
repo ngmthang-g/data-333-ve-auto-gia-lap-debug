@@ -1,0 +1,27 @@
+{
+  "source_name": "Debug",
+  "file_count": 1450,
+  "total_bytes": 146978306,
+  "extension_counts": {
+    ".config": 1,
+    ".dll": 36,
+    ".exe": 2,
+    ".pdb": 3,
+    ".png": 1393,
+    ".traineddata": 1,
+    ".txt": 6,
+    ".xml": 8
+  },
+  "png_count": 1393,
+  "png_unique_sha256": 1180,
+  "png_duplicate_groups": 178,
+  "png_duplicate_extra_files": 213,
+  "pdb_identifier_count": 783,
+  "main_type_count": 57,
+  "main_method_count": 1070,
+  "main_field_count": 429,
+  "helper_type_count": 40,
+  "helper_method_count": 224,
+  "main_static_kautohelper_refs": 14,
+  "main_static_tesseract_refs": 4
+}
