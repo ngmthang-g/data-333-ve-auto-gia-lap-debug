@@ -1,35 +1,37 @@
-name: Materialize DATA-333 frozen database
+name: Validate DATA-333 canonical database
 
 on:
   workflow_dispatch:
     inputs:
       source:
-        description: 'Optional frozen Debug directory/ZIP path inside repository; hashes are verified before hydration'
+        description: 'Optional frozen Debug directory/ZIP path inside repository; donor hashes are verified when supplied'
         required: false
         default: ''
   push:
     paths:
-      - 'materialized_payload/**'
+      - 'database/**'
+      - 'analysis/**'
+      - 'research/**'
       - 'tools/materialize_auto_debug.py'
       - '.github/workflows/materialize-auto-debug.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  materialize:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           lfs: true
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Hydrate canonical database
+      - name: Validate canonical DATA-333 database
         shell: bash
         env:
           SOURCE_PATH: ${{ github.event.inputs.source || '' }}
@@ -40,45 +42,24 @@ jobs:
               echo "Requested source '$SOURCE_PATH' does not exist"
               exit 1
             fi
-            python tools/materialize_auto_debug.py --source "$SOURCE_PATH" --repo-root .
+            python tools/materialize_auto_debug.py --source "$SOURCE_PATH" --validate-only --repo-root .
           else
-            python tools/materialize_auto_debug.py --payload-only --repo-root .
+            python tools/materialize_auto_debug.py --validate-only --repo-root .
           fi
 
-      - name: Validate canonical data surface
+      - name: Verify routing entrypoints
         shell: bash
         run: |
           set -euo pipefail
-          test -f database/TOOL_DATA_MATERIALIZATION_MANIFEST.csv
-          test -f database/dotnet/METHOD_CATALOG_0001_0600.csv
-          test -f database/control/KAUTOHELPER_CALL_GRAPH.csv
-          test -f database/features/FEATURE_METHOD_MAP.csv
-          test -f database/features/FEATURE_ASSET_MAP.csv
-          test -f database/assets/IMAGE_TEMPLATE_INDEX_0001_0700.csv
-          python - <<'PY'
-          from pathlib import Path
-          expected = 38
-          materialized = {
-              p for p in Path('database').rglob('*')
-              if p.is_file() and p.suffix.lower() in {'.csv', '.json', '.jsonl'}
-          }
-          # The repo also has hand-written docs and can have a few curated CSVs;
-          # canonical payload membership itself is checked by the hydrator.
-          print(f"database machine-readable files present: {len(materialized)}")
-          if len(materialized) < expected:
-              raise SystemExit(f"Expected at least {expected} machine-readable database files")
-          PY
-
-      - name: Commit hydrated database
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add database
-          if git diff --cached --quiet; then
-            echo "Canonical DATA-333 database is already hydrated."
-          else
-            git commit -m "data: hydrate canonical DATA-333 V2 database"
-            git push
-          fi
+          test -f AI_BOOTSTRAP.md
+          test -f AI_ROUTER.md
+          test -f AUTO_FEATURE_READINESS.md
+          test -f database/TOOL_DATA_INDEX.md
+          test -f database/SUBSYSTEM_SOURCE_MAP.md
+          test -f database/SEMANTIC_JOIN_MAP.md
+          test -f database/features/CORE_METHOD_RVA_INDEX.csv
+          test -f database/dotnet/DEVICE_STATE_CATALOG.csv
+          test -f database/control/CONTROL_CALL_CHAINS.csv
+          test -f database/assets/ASSET_ROLE_CATALOG.csv
+          test -f research/AUTO_RUNTIME_PROOF_QUEUE.md
+          echo 'DATA-333 routing and evidence surfaces present.'
