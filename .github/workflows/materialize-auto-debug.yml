@@ -1,14 +1,12 @@
-name: Validate DATA-333 canonical database
+name: Materialize and validate DATA-333
 
 on:
   workflow_dispatch:
-    inputs:
-      source:
-        description: 'Optional frozen Debug directory/ZIP path inside repository; donor hashes are verified when supplied'
-        required: false
-        default: ''
   push:
+    branches:
+      - analysis/bootstrap-auto-debug
     paths:
+      - 'materialized_payload_v4/**'
       - 'database/**'
       - 'analysis/**'
       - 'research/**'
@@ -16,36 +14,32 @@ on:
       - '.github/workflows/materialize-auto-debug.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  validate:
+  materialize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          lfs: true
           fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Validate canonical DATA-333 database
+      - name: Expand canonical high-volume database payload
         shell: bash
-        env:
-          SOURCE_PATH: ${{ github.event.inputs.source || '' }}
         run: |
           set -euo pipefail
-          if [ -n "$SOURCE_PATH" ]; then
-            if [ ! -e "$SOURCE_PATH" ]; then
-              echo "Requested source '$SOURCE_PATH' does not exist"
-              exit 1
-            fi
-            python tools/materialize_auto_debug.py --source "$SOURCE_PATH" --validate-only --repo-root .
-          else
-            python tools/materialize_auto_debug.py --validate-only --repo-root .
+          PAYLOAD='materialized_payload_v4/database-high-volume.tar.xz'
+          if [ -f "$PAYLOAD" ]; then
+            test "$(sha256sum "$PAYLOAD" | awk '{print $1}')" = 'df7ce01a7ea3abb3e1e7d526742f78f37acd6d5af761a900a0b94841c3b9c9a4'
+            tar -xJf "$PAYLOAD" -C .
           fi
+
+      - name: Refresh manifest and validate database
+        run: python tools/materialize_auto_debug.py --repo-root . --refresh-manifest --validate-only
 
       - name: Verify routing entrypoints
         shell: bash
@@ -61,5 +55,21 @@ jobs:
           test -f database/dotnet/DEVICE_STATE_CATALOG.csv
           test -f database/control/CONTROL_CALL_CHAINS.csv
           test -f database/assets/ASSET_ROLE_CATALOG.csv
+          test -f database/dotnet/METHOD_CATALOG_0001_0600.csv
+          test -f database/assets/IMAGE_TEMPLATE_INDEX_0001_0700.csv
+          test -f database/control/KAUTOHELPER_CALL_GRAPH.csv
           test -f research/AUTO_RUNTIME_PROOF_QUEUE.md
-          echo 'DATA-333 routing and evidence surfaces present.'
+
+      - name: Commit materialized database when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- database; then
+            echo 'Canonical database already materialized.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add database
+          git commit -m 'data: materialize complete DATA-333 high-volume database'
+          git push
