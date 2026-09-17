@@ -1,16 +1,15 @@
-name: Materialize auto Debug database
+name: Materialize DATA-333 frozen database
 
 on:
   workflow_dispatch:
     inputs:
       source:
-        description: 'Debug directory or ZIP path inside repository'
+        description: 'Optional frozen Debug directory/ZIP path inside repository; hashes are verified before hydration'
         required: false
-        default: 'Debug'
+        default: ''
   push:
     paths:
-      - 'Debug/**'
-      - 'source/**'
+      - 'materialized_payload/**'
       - 'tools/materialize_auto_debug.py'
       - '.github/workflows/materialize-auto-debug.yml'
 
@@ -20,40 +19,66 @@ permissions:
 jobs:
   materialize:
     runs-on: ubuntu-latest
-    env:
-      SOURCE_PATH: ${{ github.event.inputs.source || 'Debug' }}
     steps:
       - uses: actions/checkout@v4
         with:
           lfs: true
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Validate source
+      - name: Hydrate canonical database
         shell: bash
+        env:
+          SOURCE_PATH: ${{ github.event.inputs.source || '' }}
         run: |
-          if [ ! -e "$SOURCE_PATH" ]; then
-            echo "Source '$SOURCE_PATH' not found. Upload/extract the Debug snapshot or pass workflow_dispatch input 'source'."
-            exit 1
+          set -euo pipefail
+          if [ -n "$SOURCE_PATH" ]; then
+            if [ ! -e "$SOURCE_PATH" ]; then
+              echo "Requested source '$SOURCE_PATH' does not exist"
+              exit 1
+            fi
+            python tools/materialize_auto_debug.py --source "$SOURCE_PATH" --repo-root .
+          else
+            python tools/materialize_auto_debug.py --payload-only --repo-root .
           fi
 
-      - name: Materialize safe indexes
-        run: |
-          python tools/materialize_auto_debug.py \
-            --source "$SOURCE_PATH" \
-            --repo-root .
-
-      - name: Commit generated database
+      - name: Validate canonical data surface
         shell: bash
         run: |
+          set -euo pipefail
+          test -f database/TOOL_DATA_MATERIALIZATION_MANIFEST.csv
+          test -f database/dotnet/METHOD_CATALOG_0001_0600.csv
+          test -f database/control/KAUTOHELPER_CALL_GRAPH.csv
+          test -f database/features/FEATURE_METHOD_MAP.csv
+          test -f database/features/FEATURE_ASSET_MAP.csv
+          test -f database/assets/IMAGE_TEMPLATE_INDEX_0001_0700.csv
+          python - <<'PY'
+          from pathlib import Path
+          expected = 38
+          materialized = {
+              p for p in Path('database').rglob('*')
+              if p.is_file() and p.suffix.lower() in {'.csv', '.json', '.jsonl'}
+          }
+          # The repo also has hand-written docs and can have a few curated CSVs;
+          # canonical payload membership itself is checked by the hydrator.
+          print(f"database machine-readable files present: {len(materialized)}")
+          if len(materialized) < expected:
+              raise SystemExit(f"Expected at least {expected} machine-readable database files")
+          PY
+
+      - name: Commit hydrated database
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add database/generated
+          git add database
           if git diff --cached --quiet; then
-            echo "No generated data changes."
+            echo "Canonical DATA-333 database is already hydrated."
           else
-            git commit -m "data: regenerate auto Debug indexes"
+            git commit -m "data: hydrate canonical DATA-333 V2 database"
             git push
           fi
